@@ -216,7 +216,7 @@ if __name__ == "__main__":
     curr_temp = float(temp_controller.query_temp('A'))
     set_temp = float(temp_controller.query_setpoint())
     print('Current temperature ', temp_controller.query_temp('A'), 'K')    
-    temp_controller.set_setpoint(306.5)
+    temp_controller.set_setpoint(305)
     time.sleep(2)
     set_temp = float(temp_controller.query_setpoint())
     print('Set point is ', set_temp, 'K')    

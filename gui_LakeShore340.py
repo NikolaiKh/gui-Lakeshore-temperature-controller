@@ -3,10 +3,11 @@ import time
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
-import instruments as ik
-import instruments.units as u
-from PyQt5 import QtWidgets
+# import instruments as ik
+# import instruments.units as u
+from PyQt6 import QtWidgets
 import Lakeshore_class
+import ctypes
 
 
 class TemperatureControl(QtWidgets.QWidget):
@@ -14,6 +15,7 @@ class TemperatureControl(QtWidgets.QWidget):
         super().__init__()
 
         self.setWindowTitle("Temperature Control")
+        self.setWindowIcon(QtGui.QIcon('term_icon.png'))
 
         self.layout = QtWidgets.QVBoxLayout(self)
 
@@ -46,8 +48,8 @@ class TemperatureControl(QtWidgets.QWidget):
         self.layout.addWidget(self.sensor_input)
         self.layout.addWidget(self.current_temp_label)
         self.layout.addWidget(self.current_temp_input)
-        self.layout.addWidget(self.set_point_label)
         self.layout.addWidget(self.set_point_curr_label)
+        self.layout.addWidget(self.set_point_label)
         self.layout.addWidget(self.set_point_input)
         self.layout.addWidget(self.set_temp_button)
 
@@ -60,7 +62,7 @@ class TemperatureControl(QtWidgets.QWidget):
         self.temperature_plot = self.canvas.addPlot()
         self.temperature_plot.addLegend()
         pen = pg.mkPen(color=(215, 48, 39), width=1)
-        self.plot_set_temp = self.temperature_plot.plot(pen=pen, name="SetPoint temperature")
+        self.plot_set_temp = self.temperature_plot.plot(pen=pen, name="SetPoint")
         pen = pg.mkPen(color=(69, 117, 180), width=1)
         self.plot_curr_temp = self.temperature_plot.plot(pen=pen, name="Current temperature")
         self.temperature_plot.setTitle("Temperature vs Time")
@@ -74,15 +76,13 @@ class TemperatureControl(QtWidgets.QWidget):
         self.ydata = []
         self.setpoint_data = []
 
-
-
     def lakeshore_init(self):
         self.temp_controller = Lakeshore_class.Lakeshore(self.address_input.text())
         self.status_label.setText(self.temp_controller.state)
         self.set_point_input.setText(self.temp_controller.query_setpoint())
         sensor = self.sensor_input.text()
         self.current_temp_input.setText(self.temp_controller.query_temp(sensor))
-        ### start updating the window abd data ###
+        ### start updating the window and data ###
         self._update()
 
     def set_point(self):
@@ -112,7 +112,11 @@ class TemperatureControl(QtWidgets.QWidget):
 
 
 if __name__ == "__main__":
+    myappid = 'Nikolai.temperature.control.10'  # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
     app = QtWidgets.QApplication([])
+    app.setStyle('Fusion')
     window = TemperatureControl()
     window.show()
-    app.exec_()
+    app.exec()
