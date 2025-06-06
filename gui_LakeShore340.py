@@ -151,13 +151,19 @@ class TemperatureControl(QtWidgets.QWidget):
         self.setpoint_data = []
 
     def lakeshore_init(self):
-        self.temp_controller = TempControl_class.TemControlDevice(self.address_input.text())
-        self.status_label.setText(self.temp_controller.state)
-        self.set_point_input.setText(self.temp_controller.query_setpoint())
-        sensor = self.sensor_input.text()
-        self.current_temp_input.setText(self.temp_controller.query_temp(sensor))
-        ### start updating the window and data ###
-        self._update()
+        try:
+            self.temp_controller = TempControl_class.TemControlDevice(self.address_input.text())
+            self.status_label.setText(self.temp_controller.state)
+            self.status_label.setStyleSheet("color: green")
+            self.set_point_input.setText(self.temp_controller.query_setpoint())
+            sensor = self.sensor_input.text()
+            self.current_temp_input.setText(self.temp_controller.query_temp(sensor))
+            ### start updating the window and data ###
+            self._update()
+        except:
+            self.status_label.setText("Status: Connection failed!")
+            self.status_label.setStyleSheet("color: red")
+
 
     def set_point(self):
         setpoint = self.set_point_input.text()
