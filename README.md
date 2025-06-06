@@ -8,4 +8,5 @@ Have fun ;))
 
 Class is based on the file by Richard Ziegahn: https://github.com/RickyZiegahn/Lakeshore-Cryostat-Controller
 
-![image](https://github.com/user-attachments/assets/0425df96-814c-4802-ad94-ace99c8c6396)
+![image](https://github.com/user-attachments/assets/96c05345-28d9-4e80-abaf-746b5c2f5e2b)
+
