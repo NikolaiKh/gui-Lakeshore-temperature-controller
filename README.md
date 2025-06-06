@@ -1,4 +1,4 @@
-GUI for Lakeshore 330/336/340 temperature monitoring and setting of setpoint temperature
+GUI for Lakeshore 330/336/340 temperature monitoring and setting of setpoint temperature + control of Temperature ramp, heater range
 
 Class is based on the file by Richard Ziegahn: https://github.com/RickyZiegahn/Lakeshore-Cryostat-Controller
 
