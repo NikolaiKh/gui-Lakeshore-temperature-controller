@@ -1,4 +1,4 @@
-GUI for Lakeshore 330/336/340 temperature monitoring and setting of setpoint temperature + control of Temperature ramp, heater range.
+GUI for Lakeshore 330/336/340, live monitoring of current temperature, and set the setpoint temperature + control of Temperature ramp, heater range.
 
 You are free to extend the gui with other controls, here is the basic stuff I needed in my lab.
 
