@@ -2,7 +2,7 @@ GUI for Lakeshore 330/336/340, live monitoring of current temperature, and set t
 
 You are free to extend the gui with other controls, here is the basic stuff I needed in my lab.
 
-It should work with models 330, 336, 340. My gui is tested with 340 only, connected via GPIB. PyVisa is used for connection.
+It should work with models 330, 336, 340 (main features only). My gui is tested with 340 only, connected via GPIB. PyVisa is used for connection.
 
 Have fun ;))
 
