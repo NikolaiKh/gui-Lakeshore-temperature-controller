@@ -50,6 +50,8 @@ class TemperatureControl(QtWidgets.QWidget):
         self.set_point_curr_label = QtWidgets.QLabel("Current set point: ---- K")
         self.set_point_input = QtWidgets.QLineEdit('---')
 
+        self.heater_power_curr_label = QtWidgets.QLabel("Current heater power: ---- %")
+
         self.set_temp_button = QtWidgets.QPushButton("Set temperature (K)")
         self.set_temp_button.clicked.connect(self.set_point)
 
@@ -113,6 +115,11 @@ class TemperatureControl(QtWidgets.QWidget):
         self.layout_curr_temp.addWidget(self.current_temp_label)
         self.layout_curr_temp.addWidget(self.current_temp_input)
         self.main_vertical_layout.addLayout(self.layout_curr_temp)
+
+        #current heater power label
+        self.layout_curr_heater_power = QtWidgets.QHBoxLayout()
+        self.layout_curr_heater_power.addWidget(self.heater_power_curr_label)
+        self.main_vertical_layout.addLayout(self.layout_curr_heater_power)
 
         # set point section
         # self.main_vertical_layout.addWidget(self.set_point_curr_label)
@@ -187,6 +194,8 @@ class TemperatureControl(QtWidgets.QWidget):
         self.heater_range_curr_label.setText(f'Current heater range: {get_heater_range}')
         get_curr_rate = float(self.temp_controller.query_ramp())
         self.rate_curr_label.setText(f'Current Temp Ramp: {get_curr_rate} [K/min]')
+        get_curr_heater_power = float(self.temp_controller.query_heater_power())
+        self.heater_power_curr_label.setText(f'Current heater power: {get_curr_heater_power} [%]')
         # plot current and set temperatures
         self.xdata.append(self.counter)
         self.ydata.append(curr_temp)

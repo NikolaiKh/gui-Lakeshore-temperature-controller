@@ -141,6 +141,15 @@ class TemControlDevice:
             rstr = self.lakeshore.query(f'RAMP? {loop}' +'\n')
         return float(rstr.split(",")[-1])
 
+    def query_heater_power(self):
+        # tested with model 340 only
+        # Input: HTR?
+        # Returned: < heater value >.Format: nnn.n[term]
+        # Remarks: Returns the heater output in percent.
+        if self.model == 'MODEL340':
+            rstr = self.lakeshore.query(f'HTR?' +'\n')
+        return float(rstr.split(",")[-1])
+
 
     def set_alarm(self, value_channel, on_off, value_high, value_low):
         '''
@@ -233,16 +242,21 @@ if __name__ == "__main__":
     curr_temp = float(temp_controller.query_temp('A'))
     set_temp = float(temp_controller.query_setpoint())
     print('Current temperature ', temp_controller.query_temp('A'), 'K')    
-    temp_controller.set_setpoint(308)
+    temp_controller.set_setpoint(294)
     # temp_controller.set_heater_range(4)
     print(f"Heater range: {temp_controller.query_heater_range()}")
     temp_controller.set_ramp(rate=10)
     print(f"Ramp rate: {temp_controller.query_ramp()}")
     time.sleep(2)
-    set_temp = float(temp_controller.query_setpoint())
-    print('Set point is ', set_temp, 'K')    
-    while abs(curr_temp - set_temp) > 0.5:
-        curr_temp = float(temp_controller.query_temp('A'))
-        print('Current temperature ', curr_temp, 'K')
-        print('Set point is ', temp_controller.query_setpoint(), 'K')
-        time.sleep(2)
+    # set_temp = float(temp_controller.query_setpoint())
+    # print('Set point is ', set_temp, 'K')
+    heater_power = float(temp_controller.query_heater_power())
+    print('Heater power is ', heater_power, '%')
+    time.sleep(1)
+    heater_power = float(temp_controller.query_heater_power())
+    print('Heater power is ', heater_power, '%')
+    # while abs(curr_temp - set_temp) > 0.5:
+    #     curr_temp = float(temp_controller.query_temp('A'))
+    #     print('Current temperature ', curr_temp, 'K')
+    #     print('Set point is ', temp_controller.query_setpoint(), 'K')
+    #     time.sleep(2)
