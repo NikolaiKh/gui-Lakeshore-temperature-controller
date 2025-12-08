@@ -5,7 +5,7 @@ import time
 # Class is based on the file https://github.com/RickyZiegahn/Lakeshore-Cryostat-Controller
 # by Richard Ziegahn
 # It works with models 330, 336, 340,
-# testsed with 340 only, connected via GPIB
+# testsed with 340 and 335 only, connected via GPIB
 
 # COM port settings from original file of Richard Ziegahn:
 # gpibport = 5
@@ -41,12 +41,14 @@ class TemControlDevice:
         330: INPUT: SETP[set point]
         340: INPUT: SETP <loop>,<value>
         336: INPUT: SETP <output>,<value>
+        335: INPUT: SETP <output>,<value>
         Loop and output are the same thing: the temperature
         '''
         if self.model == 'MODEL330':
             temperature = round(float(temperature),2)
             self.lakeshore.write('SETP' + str(temperature) + '\n')
-        if self.model == 'MODEL340' or self.model == 'MODEL336':
+        else:
+        # if self.model == 'MODEL340' or self.model == 'MODEL336':
             temperature = round(float(temperature),3)
             self.lakeshore.write('SETP ' + str(loop) + ', ' + str(temperature) + '\n')
 
@@ -59,13 +61,16 @@ class TemControlDevice:
              RETURN: <value>
         336: INPUT SETP? <output>
              RETURN: <value>
+        335: INPUT SETP? <output>
+             RETURN: <value>
         Loop and output are the same thing
         '''
         if self.model == 'MODEL330':
             rstr = self.lakeshore.query('SETP? ')
             rstr = rstr[0:len(rstr)-2]
             return rstr
-        elif self.model == 'MODEL340' or self.model == 'MODEL336':
+        else:
+        #elif self.model == 'MODEL340' or self.model == 'MODEL336':
             rstr = self.lakeshore.query('SETP? ' + str(loop))
             rstr = rstr[0:len(rstr)-2]
             return rstr
@@ -77,14 +82,15 @@ class TemControlDevice:
              RETURN: <heater value> #increments of 5%
         340: INPUT: HTR?
              RETURN: <heater value>
-        336: INPUT:HTR? <output>
+        336, 335: INPUT:HTR? <output>
              RETURN: <heater value>
         '''
         if self.model == 'MODEL330':
             rstr = self.lakeshore.query('HEAT? ')
             rstr = rstr[0:len(rstr)-2]
             return rstr
-        elif self.model == 'MODEL340' or self.model == 'MODEL336':
+        else:
+        # elif self.model == 'MODEL340' or self.model == 'MODEL336':
             rstr = self.lakeshore.query('HTR? ' + output)
             rstr = rstr[0:len(rstr)-2]
             return rstr
@@ -100,11 +106,15 @@ class TemControlDevice:
         336: INPUT: RANGE <output>,<range>
         For output 1: 0 is off; 1 is 0.1W; 2 is 10W; 3 is 100W
         For output 2: 0 is off; 1 is 0.5W; 2 is 5W; 3 is 50W
+        335: INPUT: RANGE <output>,<range>
+        For Outputs 1 and 2 in Current mode: 0 = Off, 1 = Low, 2 = Medium, 3 = High
+        For Output 2 in Voltage mode: 0 = Off, 1 = On
         '''
         if self.model == 'MODEL330':
             self.lakeshore.write('RANG' + str(value_range) + '\n')
-        elif self.model == 'MODEL340' or self.model == 'MODEL336':
-            # self.lakeshore.write('RANGE ' + output + ',' + str(value_range) + '\n')
+        elif self.model == 'MODEL335' or self.model == 'MODEL336':
+            self.lakeshore.write('RANGE ' + str(output) + ',' + str(value_range) + '\n')
+        elif self.model == 'MODEL340':
             self.lakeshore.write('RANGE ' + str(value_range) + '\n')
 
     def query_heater_range(self, output='1'):
@@ -114,14 +124,15 @@ class TemControlDevice:
              RETURN: <range>
         340: INPUT: RANGE?
              RETURN: <range>
-        336: INPUT: RANGE? <output>
+        336, 335: INPUT: RANGE? <output>
              RETURN: <range>
         '''
         if self.model == 'MODEL330':
             rstr = self.lakeshore.query('RANG?')
             rstr = rstr[0:len(rstr)-2]
             return rstr
-        elif self.model == 'MODEL340' or self.model == 'MODEL336':
+        else:
+        # elif self.model == 'MODEL340' or self.model == 'MODEL336':
             rstr = self.lakeshore.query('RANGE? ' + output)
             rstr = rstr[0:len(rstr)-2]
             return rstr
@@ -139,15 +150,24 @@ class TemControlDevice:
         # Returned: < off / on >, < rate value >.Format: nnn.n[term]
         if self.model == 'MODEL340':
             rstr = self.lakeshore.query(f'RAMP? {loop}' +'\n')
+        elif self.model == 'MODEL335':
+            rstr = self.lakeshore.query(f'RAMP? {loop}')
         return float(rstr.split(",")[-1])
 
-    def query_heater_power(self):
-        # tested with model 340 only
-        # Input: HTR?
-        # Returned: < heater value >.Format: nnn.n[term]
-        # Remarks: Returns the heater output in percent.
+    def query_heater_power(self, output='1'):
+        '''
+        tested with model 340 only
+        340 Input: HTR?
+        Returned: < heater value >.Format: nnn.n[term]
+        Remarks: Returns the heater output in percent.
+        335 Input: HTR? <output>[term]
+        Returned <heater value>[term]
+        Format ±nnn.n
+        '''
         if self.model == 'MODEL340':
             rstr = self.lakeshore.query(f'HTR?' +'\n')
+        elif self.model == 'MODEL335':
+            rstr = self.lakeshore.query(f'HTR? {output}')
         return float(rstr.split(",")[-1])
 
 
@@ -159,11 +179,12 @@ class TemControlDevice:
         330: N/A
         340: INPUT: ALARM <input>, <off/on>, <source>, <high value>, <low value>, <latch enable>, <relay>
         336: INPUT: ALARM <input>,<off/on>,<high value>,<low value>,<deadband>,<latch enable>,<audible>,<visible>
+        335: INPUT: ALARM <input>,<off/on>,<high value>,<low value>,<deadband>,<latch enable>,<audible>,<visible> [term]
         '''
         if self.model == 'MODEL340':
             self.lakeshore.write('ALARM ' + value_channel.upper() + ', ' + on_off + ', 1, ' + 
                       value_high + ', ' + value_low + '0,0\n')
-        elif self.model == 'MODEL336':
+        elif self.model == 'MODEL336' or self.model == 'MODEL335':
             self.lakeshore.write('ALARM ' + value_channel.upper() + ',' + on_off + ',' + 
                       value_high + ',' + value_low + ',0,0,0,1\n')
         
@@ -176,6 +197,8 @@ class TemControlDevice:
              RETURN: <off/on>, <source>, <high value>, <low value>, <latch enable>, <relay enable>
         336: INPUT: ALARM? <input>
              RETURN: <off/on>,<high value>,<low value>,<deadband>,<latch enable>,<audible>,<visible>
+        335: INPUT: ALARM? <input>[term]
+             RETURN: <off/on>,<high value>,<low value>,<deadband>,<latch enable>,<audible>,<visible>[term]
         '''
         if self.model == 'MODEL340':
             rstr = self.lakeshore.query('ALARM? ' + value_channel)
@@ -188,7 +211,7 @@ class TemControlDevice:
             #order as the 336 list
             rlist = [rlisttemp[0],rlisttemp[2],rlisttemp[3]]
             return rlist
-        elif self.model == 'MODEL336':
+        elif self.model == 'MODEL336' or self.model == 'MODEL335':
             rstr = self.lakeshore.query('ALARM? ' + value_channel)
             rlist = rstr.split(',')
             rlist[-1] = rlist[-1][0:len(rlist[-1])-2]
@@ -204,9 +227,11 @@ class TemControlDevice:
              RETURN: <high status>,<low status>
         336: INPUT: ALARMST? <value_channel>
              RETURN: <high state>,<low state>
+        335: INPUT: ALARMST? <input>[term]
+             RETURN: <high state>,<low state>[term]
         0 = off, 1 = on
         '''
-        if (self.model == 'MODEL340' or self.model == 'MODEL336'):
+        if (self.model == 'MODEL340' or self.model == 'MODEL336' or self.model == 'MODEL335'):
             rstr = self.lakeshore.query('ALARMST? ' + value_channel)
             rlist = rstr.split(',')
             rlist[-1] = rlist[-1][0:len(rlist[-1])-2]
@@ -222,6 +247,8 @@ class TemControlDevice:
              RETURN: <temperature>
         336: INPUT: KRDG? <sensor (A/B)>
              RETURN: <temperature>
+        335: INPUT: KRDG? <input>[term]
+             RETURN: <temperature>
         '''
         if self.model == 'MODEL330':
             if sensor == 'A':
@@ -230,7 +257,8 @@ class TemControlDevice:
                 rstr = self.lakeshore.query('CDAT? ')
             rstr = rstr[0:len(rstr)-2]
             return rstr
-        elif self.model == 'MODEL340' or self.model == 'MODEL336':
+        else:
+        # elif self.model == 'MODEL340' or self.model == 'MODEL336':
             rstr = self.lakeshore.query('KRDG? ' + sensor)
             rstr = rstr[0:len(rstr)-2]
             return rstr
@@ -239,8 +267,8 @@ class TemControlDevice:
 if __name__ == "__main__":
     temp_controller = TemControlDevice(12) #use your GPIB port
     print(temp_controller.state)
-    curr_temp = float(temp_controller.query_temp('A'))
-    set_temp = float(temp_controller.query_setpoint())
+    # curr_temp = float(temp_controller.query_temp('A'))
+    print(f'Setpoint: {float(temp_controller.query_setpoint())} K')
     print('Current temperature ', temp_controller.query_temp('A'), 'K')    
     temp_controller.set_setpoint(294)
     # temp_controller.set_heater_range(4)
