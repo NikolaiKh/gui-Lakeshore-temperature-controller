@@ -184,10 +184,10 @@ class TemperatureControl(QtWidgets.QWidget):
 
     def get_curr_temp(self):
         if 'ITC' in str(self.temp_controller.model):           
-            return self.temp_controller.query_temp()
+            return float(self.temp_controller.query_temp())
         else:
             sensor = self.sensor_input.text()
-            return self.temp_controller.query_temp(sensor)
+            return float(self.temp_controller.query_temp(sensor))
 
 
     def set_point(self):
