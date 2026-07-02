@@ -1,3 +1,7 @@
+# author Nikolai Khokhlov
+# version 2026.06.22
+# contains list of adresses for devices
+
 import sys
 import time
 import pyqtgraph as pg
@@ -6,8 +10,8 @@ import numpy as np
 # import instruments as ik
 # import instruments.units as u
 from PyQt6 import QtWidgets
-import Lakeshore_class as TempControl_class
-# import OxfordInst_ITC5023S_class as TempControl_class
+# import Lakeshore_class as TempControl_class
+import OxfordInst_ITC503S_class as TempControl_class
 import ctypes
 
 
@@ -21,7 +25,11 @@ class TemperatureControl(QtWidgets.QWidget):
         # create the elements
 
         self.address_label = QtWidgets.QLabel("Lakeshore GPIB address")
-        self.address_input = QtWidgets.QLineEdit('12')
+        # self.address_input = QtWidgets.QLineEdit('12')
+        self.temp_controller = TempControl_class.TemControlDevice()
+        all_devices = self.temp_controller.all_instruments
+        self.address_input = QtWidgets.QComboBox()
+        self.address_input.addItems(all_devices)
 
         self.connect_button = QtWidgets.QPushButton("Connect")
         self.connect_button.clicked.connect(self.lakeshore_init)
@@ -159,17 +167,27 @@ class TemperatureControl(QtWidgets.QWidget):
 
     def lakeshore_init(self):
         try:
-            self.temp_controller = TempControl_class.TemControlDevice(self.address_input.text())
+            # self.temp_controller = TempControl_class.TemControlDevice(self.address_input.currentText())
+            # print(self.address_input.currentText())
+            self.temp_controller.init_controller(self.address_input.currentText())
             self.status_label.setText(self.temp_controller.state)
             self.status_label.setStyleSheet("color: green")
-            self.set_point_input.setText(self.temp_controller.query_setpoint())
-            sensor = self.sensor_input.text()
-            self.current_temp_input.setText(self.temp_controller.query_temp(sensor))
+            # print('SetTemp:', self.temp_controller.query_setpoint())
+            self.set_point_input.setText(str(self.temp_controller.query_setpoint()))            
+            self.get_curr_temp()
             ### start updating the window and data ###
             self._update()
         except:
             self.status_label.setText("Status: Connection failed!")
             self.status_label.setStyleSheet("color: red")
+
+
+    def get_curr_temp(self):
+        if 'ITC' in str(self.temp_controller.model):           
+            return self.temp_controller.query_temp()
+        else:
+            sensor = self.sensor_input.text()
+            return self.temp_controller.query_temp(sensor)
 
 
     def set_point(self):
@@ -181,21 +199,41 @@ class TemperatureControl(QtWidgets.QWidget):
         self.temp_controller.set_ramp(rate=rate)
 
     def set_heater_range(self):
-        range = self.heater_range_input.text()
-        self.temp_controller.set_heater_range(value_range=range)
+        try:
+            range = self.heater_range_input.text()
+            self.temp_controller.set_heater_range(value_range=range)
+        except:
+            return
+
+    def get_heater_range(self):
+        if 'ITC' in str(self.temp_controller.model):           
+            return 'auto' #self.temp_controller.getValue(5)
+        else:
+            return int(self.temp_controller.query_heater_range())
+        
+    def get_heater_power(self):
+        if 'ITC' in str(self.temp_controller.model):           
+            return self.temp_controller.getValue(5)
+        else:
+            return float(self.temp_controller.query_heater_power())
 
     def _update(self):
-        sensor = self.sensor_input.text()
-        curr_temp = float(self.temp_controller.query_temp(sensor))
+        # sensor = self.sensor_input.text()
+        # curr_temp = float(self.temp_controller.query_temp(sensor))
+        # self.current_temp_input.setText(str(curr_temp))
+        curr_temp = self.get_curr_temp()
         self.current_temp_input.setText(str(curr_temp))
         set_temp = float(self.temp_controller.query_setpoint())
         self.set_point_curr_label.setText(f'Current set point: {set_temp} [K]')
-        get_heater_range = int(self.temp_controller.query_heater_range())
+        get_heater_range = self.get_heater_range()
         self.heater_range_curr_label.setText(f'Current heater range: {get_heater_range}')
-        get_curr_rate = float(self.temp_controller.query_ramp())
-        self.rate_curr_label.setText(f'Current Temp Ramp: {get_curr_rate} [K/min]')
-        get_curr_heater_power = float(self.temp_controller.query_heater_power())
-        self.heater_power_curr_label.setText(f'Current heater power: {get_curr_heater_power} [%]')
+        if 'ITC' in str(self.temp_controller.model):           
+            curr_rate = 'auto'
+        else:
+            curr_rate = float(self.temp_controller.query_ramp())
+        self.rate_curr_label.setText(f'Current Temp Ramp: {curr_rate} [K/min]')
+        # get_curr_heater_power = float(self.temp_controller.query_heater_power())
+        self.heater_power_curr_label.setText(f'Current heater power: {self.get_heater_power()} [%]')
         # plot current and set temperatures
         self.xdata.append(self.counter)
         self.ydata.append(curr_temp)
