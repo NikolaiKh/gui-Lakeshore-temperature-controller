@@ -13,16 +13,31 @@ import time
 # sleeptime = 10
 
 class TemControlDevice:
-    def __init__(self, gpibport):
-        rm = pyvisa.ResourceManager()
-        self.lakeshore = rm.open_resource(f'GPIB0::{gpibport}::INSTR')
-        self.name = self.lakeshore.query('*IDN?')        
+    def __init__(self):
+        self.lakeshore = None
+        self.model = None
+        self.name = None
+        self.state = None
+        self.rm = pyvisa.ResourceManager()
+        self.all_instruments = self.rm.list_resources()
+        print(f'Connected instruments: {self.all_instruments}')
+        # self.lakeshore = rm.open_resource(f'GPIB0::{gpibport}::INSTR')
+        # self.name = self.lakeshore.query('*IDN?')        
+        # rlist = self.name.split(',')
+        # self.model = rlist[1]
+        # self.state = f'Lakeshore is connected. Model {self.model}'
+    
+    def init_controller(self, device_name='12'):
+        if 'GPIB0::' in str(device_name):
+            self.lakeshore = self.rm.open_resource(device_name)
+        else:
+            self.lakeshore = self.rm.open_resource(f'GPIB0::{device_name}::INSTR')
+        self.name = self.lakeshore.query('*IDN?')
         rlist = self.name.split(',')
         self.model = rlist[1]
         self.state = f'Lakeshore is connected. Model {self.model}'
 
-
-    def query(self,string):
+    def query(self, string):
         '''
         Asks for data then returns the response
         '''
@@ -265,7 +280,8 @@ class TemControlDevice:
 
 
 if __name__ == "__main__":
-    temp_controller = TemControlDevice(12) #use your GPIB port
+    temp_controller = TemControlDevice() #use your GPIB port
+    temp_controller.init_controller('GPIB0::12::INSTR')
     print(temp_controller.state)
     # curr_temp = float(temp_controller.query_temp('A'))
     print(f'Setpoint: {float(temp_controller.query_setpoint())} K')
