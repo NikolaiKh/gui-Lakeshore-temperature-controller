@@ -1,6 +1,5 @@
 # author Nikolai Khokhlov
-# version 2026.06.22
-# contains list of adresses for devices
+# version 2026.07.02
 
 import sys
 import time
