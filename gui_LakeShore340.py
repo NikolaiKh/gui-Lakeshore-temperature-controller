@@ -1,5 +1,5 @@
 # author Nikolai Khokhlov
-# version 2026.07.02
+# version 2026.11.09
 
 import sys
 import time
@@ -9,8 +9,9 @@ import numpy as np
 # import instruments as ik
 # import instruments.units as u
 from PyQt6 import QtWidgets
+import pyvisa
 # import Lakeshore_class as TempControl_class
-import OxfordInst_ITC503S_class as TempControl_class
+# import OxfordInst_ITC503S_class as TempControl_class
 import ctypes
 
 
@@ -23,10 +24,12 @@ class TemperatureControl(QtWidgets.QWidget):
 
         # create the elements
 
-        self.address_label = QtWidgets.QLabel("Lakeshore GPIB address")
+        self.address_label = QtWidgets.QLabel("Controller GPIB address")
         # self.address_input = QtWidgets.QLineEdit('12')
-        self.temp_controller = TempControl_class.TemControlDevice()
-        all_devices = self.temp_controller.all_instruments
+        # self.temp_controller = TempControl_class.TemControlDevice()
+        self.rm = pyvisa.ResourceManager()
+        # self.all_instruments = self.rm.list_resources()
+        all_devices = self.rm.list_resources()
         self.address_input = QtWidgets.QComboBox()
         self.address_input.addItems(all_devices)
 
@@ -165,13 +168,28 @@ class TemperatureControl(QtWidgets.QWidget):
         self.setpoint_data = []
 
     def lakeshore_init(self):
+        device = None
         try:
-            # self.temp_controller = TempControl_class.TemControlDevice(self.address_input.currentText())
-            # print(self.address_input.currentText())
+            # check the model
+            device = self.rm.open_resource(self.address_input.currentText())
+            name = device.query('*IDN?')
+            print(f"Detected instrument: {name}")
+
+        finally:
+            if device is not None:
+                device.close()
+            self.rm.close()
+
+        if "LS" in name:
+            import Lakeshore_class as TempControl_class
+        else:
+            import OxfordInst_ITC503S_class as TempControl_class
+        self.temp_controller = TempControl_class.TemControlDevice()
+
+        try:
             self.temp_controller.init_controller(self.address_input.currentText())
             self.status_label.setText(self.temp_controller.state)
             self.status_label.setStyleSheet("color: green")
-            # print('SetTemp:', self.temp_controller.query_setpoint())
             self.set_point_input.setText(str(self.temp_controller.query_setpoint()))            
             self.get_curr_temp()
             ### start updating the window and data ###
