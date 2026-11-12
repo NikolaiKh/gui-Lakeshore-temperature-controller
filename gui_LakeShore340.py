@@ -1,5 +1,5 @@
 # author Nikolai Khokhlov
-# version 2026.11.09
+# version 2026.11.12.0
 
 import sys
 import time
@@ -169,13 +169,18 @@ class TemperatureControl(QtWidgets.QWidget):
 
     def lakeshore_init(self):
         device = None
+        name = None
         try:
             # check the model
             device = self.rm.open_resource(self.address_input.currentText())
             name = device.query('*IDN?')
-            print(f"Detected instrument: {name}")
-
+        except:
+            # direct Oxford command
+            device.read_termination = '\r'
+            device.write("V")
+            name = device.read()
         finally:
+            print(f"Detected instrument: {name}")
             if device is not None:
                 device.close()
             self.rm.close()
