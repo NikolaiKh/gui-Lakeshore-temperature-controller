@@ -1,5 +1,5 @@
 # author Nikolai Khokhlov
-# version 2026.11.12.0
+# version 2026.11.12.1
 
 import sys
 import time
